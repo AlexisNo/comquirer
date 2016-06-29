@@ -1,22 +1,7 @@
-Comquirer
-===
+/*eslint-env mocha */
+'use strict';
 
-Define a command line and a prompt in one single configuration.
-
-Quickly create commands that can be scripted but that can also help the used to choose options and parameter value with a prompt.
-
-Comquirer is just a small wrapper of [commander](https://github.com/tj/commander.js/) and [inquirer](https://github.com/SBoudrias/Inquirer.js/)
-that helps you to simplify their association.
-
-`Commander` arguments and options are transformed in a hash of parameter keys <=> values. Then, parameters that do not have been provided are asked
-in an `inquirer` question. It is possible to configure a parameter to be set only with an argument/option or only with a question.
-
-```javascript
-const icli = require('comquirer');
-const packageJson = require('./package.json');
-
-// It is possible to access directly to the commander instance
-icli.getProgram().version(packageJson.version);
+const icli = require('..');
 
 const config = {
   cmd: 'burger',
@@ -35,10 +20,10 @@ const config = {
     question: {
       message: 'Choose your sauce(s)'
     }
-  }, {
-    question: {
-      message: 'Are you vegetarian?'
-    }
+  // }, {
+  //   question: {
+  //     message: 'Are you vegetarian?'
+  //   }
   }, {
     cmdSpec: '-b, --bacon <none|simple|double|triple>',
     description: 'Select the quantity of bacon',
@@ -48,16 +33,18 @@ const config = {
       message: 'What quantity of bacon do you want?'
     }
   }, {
-    cmdSpec: '--salad>',
+    cmdSpec: '--salad',
     description: 'Add salad',
-    type: 'bool',
+    type: 'confirm',
+    default: false,
     question: {
       message: 'Do you want some salad?'
     }
   }, {
-    cmdSpec: '--tomato>',
+    cmdSpec: '--tomato',
     description: 'Add tomato',
-    type: 'bool',
+    type: 'confirm',
+    default: true,
     question: {
       message: 'Do you want some tomato?'
     }
@@ -70,8 +57,7 @@ const config = {
     }
   }],
   commanderActionHook() {
-    // Here you can transform the data passed to commander's action() callback
-    // and return it
+    // Here you can transform the data passed to commander's action() callback and return it
     return arguments;
   },
   inquirerPromptHook(answers, commandParameterValues) {
@@ -80,21 +66,14 @@ const config = {
     return Promise.resolve([answers, commandParameterValues]);
   }
 };
-
 icli.createSubCommand(config, parameters => {
   // The argument of this callback function is the aggregation of parameter values from the command and from the prompt
-
   // Comquirer comes with a small helper to colorize text
-  console.log('The ' + icli.info(parameters.name) + ' burger is in preparation ...')
-
-  burgerLib.doABurger(parameters)
-  .then(burger => {
-    console.log('Have a nice meal!');
-    // syntax highlighting is performed by cardinal
-    console.log(icli.highlight(JSON.stringify(burger, null, 2), { json: true }));
-  });
+  console.log('The ' + icli.format.info(parameters.name) + ' burger is in preparation ...');
+  const burger = parameters;
+  console.log('Have a nice meal!');
+  // syntax highlighting is performed by cardinal
+  console.log(icli.highlight(JSON.stringify(burger, null, 2), { json: true }));
 });
 
-// Call the parse() method of commander to begin the execution
 icli.getProgram().parse(process.argv);
-```
