@@ -1,6 +1,7 @@
 Comquirer
 ===
 
+[![Build Status](https://travis-ci.org/AlexisNo/comquirer.svg?branch=master)](https://travis-ci.org/AlexisNo/comquirer)
 [![bitHound Overall Score](https://www.bithound.io/github/AlexisNo/comquirer/badges/score.svg)](https://www.bithound.io/github/AlexisNo/comquirer)
 [![bitHound Dependencies](https://www.bithound.io/github/AlexisNo/comquirer/badges/dependencies.svg)](https://www.bithound.io/github/AlexisNo/comquirer/master/dependencies/npm)
 [![bitHound Code](https://www.bithound.io/github/AlexisNo/comquirer/badges/code.svg)](https://www.bithound.io/github/AlexisNo/comquirer)
@@ -8,13 +9,13 @@ Comquirer
 
 Define a command line and a prompt in one single configuration.
 
-Quickly create commands that can be scripted but that can also help the used to choose options and parameter value with a prompt.
+Quickly create commands that can be scripted AND user friendly using prompt to choose arguments and options values.
 
 Comquirer is just a small wrapper of [commander](https://github.com/tj/commander.js/) and [inquirer](https://github.com/SBoudrias/Inquirer.js/)
 that helps you to simplify their association.
 
-`Commander` arguments and options are transformed in a hash of parameter keys <=> values. Then, parameters that do not have been provided are asked
-in an `inquirer` question. It is possible to configure a parameter to be set only with an argument/option or only with a question.
+`Commander` arguments and options are transformed into a hash of parameter keys <=> values. Then, parameters that do not have been provided in the command line
+are asked in an `inquirer` prompt. It is possible to configure a parameter to be set only with an argument/option or only with a question.
 
 ```javascript
 const icli = require('comquirer');
