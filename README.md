@@ -1,6 +1,11 @@
 Comquirer
 ===
 
+[![bitHound Overall Score](https://www.bithound.io/github/AlexisNo/comquirer/badges/score.svg)](https://www.bithound.io/github/AlexisNo/comquirer)
+[![bitHound Dependencies](https://www.bithound.io/github/AlexisNo/comquirer/badges/dependencies.svg)](https://www.bithound.io/github/AlexisNo/comquirer/master/dependencies/npm)
+[![bitHound Code](https://www.bithound.io/github/AlexisNo/comquirer/badges/code.svg)](https://www.bithound.io/github/AlexisNo/comquirer)
+[![codecov](https://codecov.io/gh/AlexisNo/comquirer/branch/master/graph/badge.svg)](https://codecov.io/gh/AlexisNo/comquirer)
+
 Define a command line and a prompt in one single configuration.
 
 Quickly create commands that can be scripted but that can also help the used to choose options and parameter value with a prompt.
