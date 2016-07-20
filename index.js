@@ -288,7 +288,8 @@ function validateParameters(parameters, validations) {
   let messages = [];
   _.forEach(parameters, (value, key) => {
     if (value && validations[key]) {
-      const validation = validations[key](value);
+      // A validation function receive 3 parameters: value to test, prompt answers and cli parameters
+      const validation = validations[key](value, {}, parameters);
       if (validation !== true) {
         if (validation === false) {
           messages.push(icli.format.error(value) + ' is not a valid parameter for ' + icli.format.info(key));
