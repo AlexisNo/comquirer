@@ -55,13 +55,13 @@ const config = {
     question: {
       message: 'How many steaks do you want?'
     }
-  // }, {
-  //   cmdSpec: '--price <estimated-price>',
-  //   description: 'Price you are willing to pay',
-  //   type: 'number',
-  //   question: {
-  //     message: 'How much are you willing to pay?'
-  //   }
+  }, {
+    cmdSpec: '--price <estimated-price>',
+    description: 'Price you are willing to pay',
+    type: 'number',
+    question: {
+      message: 'How much are you willing to pay?'
+    }
   }],
   commanderActionHook() {
     // Here you can transform the data passed to commander's action() callback and return it

@@ -5,6 +5,9 @@ const cardinal = require('cardinal');
 const program = require('commander');
 const prompt = require('inquirer');
 
+const intRegex = /^[0-9]+$/;
+const numberRegex = /^[0-9]+(\.[0-9]+)?$/;
+
 /**
  * Interactive Command Line Interface
  * @type {Object}
@@ -149,14 +152,22 @@ function parseParameters(parameters) {
     // If the parameter configuration already has a validator, we do not override it
     if (!parameter.validate) {
       // We create validators for all "list" and "checkbox" parameters
-      if (['list', 'checkbox'].indexOf(parameter.type) !== -1) {
-        // We automatically add a validator to list and checkbox parameters
-        parameter.validate = icli.generateListValidation(parameter.choices, parameter.validationMsgLabel);
-      }
-      if (parameter.type === 'integer') {
-        parameter.validate = (v) => {
-          return !isNaN(v);
-        };
+      switch (parameter.type) {
+        case 'list':
+        case 'checkbox':
+          // We automatically add a validator to list and checkbox parameters
+          parameter.validate = icli.generateListValidation(parameter.choices, parameter.validationMsgLabel);
+          break;
+        case 'integer':
+          parameter.validate = (v) => {
+            return intRegex.test(v);
+          };
+          break;
+        case 'number':
+          parameter.validate = (v) => {
+            return numberRegex.test(v);
+          };
+          break;
       }
     }
   });
@@ -199,12 +210,15 @@ function parseArgumentSpec(parameter) {
 function getCoercionForType(type) {
   switch (type) {
     case 'integer':
-      return val => {
-        const parsedValue = parseInt(val);
-        return isNaN(parsedValue) ? val : parsedValue;
+      return v => {
+        return intRegex.test(v) ? parseInt(v) : v;
+      };
+    case 'number':
+      return v => {
+        return numberRegex.test(v) ? parseFloat(v) : v;
       };
     case 'checkbox':
-      return val => { return _.map(val.split(','), _.trim); };
+      return v => { return _.map(v.split(','), _.trim); };
     default:
       return undefined;
   }
