@@ -51,6 +51,14 @@ const icli = {
    * @returns {void}
    */
   createSubCommand(config, executeCommand) {
+    // Initialise config and resolve configuration aliases
+    config.parameters = config.parameters || [];
+    config.parameters.forEach(parameter => {
+      if (parameter.type === 'int') {
+        parameter.type = 'integer';
+      }
+    });
+
     // create the command
     const cmd = program.command(config.cmd, null, config.options);
     cmd.description(config.description);
@@ -145,6 +153,11 @@ function parseParameters(parameters) {
         // We automatically add a validator to list and checkbox parameters
         parameter.validate = icli.generateListValidation(parameter.choices, parameter.validationMsgLabel);
       }
+      if (parameter.type === 'integer') {
+        parameter.validate = (v) => {
+          return !isNaN(v);
+        };
+      }
     }
   });
 
@@ -185,12 +198,15 @@ function parseArgumentSpec(parameter) {
  */
 function getCoercionForType(type) {
   switch (type) {
-    case 'int':
-      return parseInt;
+    case 'integer':
+      return val => {
+        const parsedValue = parseInt(val);
+        return isNaN(parsedValue) ? val : parsedValue;
+      };
     case 'checkbox':
       return val => { return _.map(val.split(','), _.trim); };
     default:
-      return null;
+      return undefined;
   }
 }
 
@@ -287,7 +303,7 @@ function cliArgsToParameters(cliArgs) {
 function validateParameters(parameters, validations) {
   let messages = [];
   _.forEach(parameters, (value, key) => {
-    if (value && validations[key]) {
+    if (typeof value !== 'undefined' && validations[key]) {
       // A validation function receive 3 parameters: value to test, prompt answers and cli parameters
       const validation = validations[key](value, {}, parameters);
       if (validation !== true) {
@@ -310,6 +326,7 @@ function validateParameters(parameters, validations) {
  */
 function parametersToQuestions(parameters, cmdParameterValues) {
   const questions = [];
+
   _.forEach(parameters, parameter => {
     // the question parameter is already an inquirer question
     const question = parameter.question;
@@ -340,7 +357,7 @@ function parametersToQuestions(parameters, cmdParameterValues) {
     if (!question.when) {
       question.when = (answers) => {
         // skip the question if the value have been set in the command and no other when() parameter has been defined
-        return !cmdParameterValues[parameter.name];
+        return typeof cmdParameterValues[parameter.name] === 'undefined';
       };
     } else {
       const extendedWhen = question.when;
