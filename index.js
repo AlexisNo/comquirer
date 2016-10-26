@@ -160,12 +160,18 @@ function parseParameters(parameters) {
           break;
         case 'integer':
           parameter.validate = (v) => {
-            return intRegex.test(v);
+            if (intRegex.test(v)) {
+              return true;
+            }
+            return icli.format.error(v) + ' is not a valid value for ' + icli.format.info(parameter.name) + ' (expecting an integer)';
           };
           break;
         case 'number':
           parameter.validate = (v) => {
-            return numberRegex.test(v);
+            if (numberRegex.test(v)) {
+              return true;
+            }
+            return icli.format.error(v) + ' is not a valid value for ' + icli.format.info(parameter.name) + ' (expecting a number)';
           };
           break;
       }
@@ -205,7 +211,7 @@ function parseArgumentSpec(parameter) {
 /**
  * Get default coercion for a parameter type
  * @param {string} type - a parameter type
- * @returns {function|null} - the coercion function to applu to the command line argument/option
+ * @returns {function|null} - the coercion function to apply to the command line argument/option
  */
 function getCoercionForType(type) {
   switch (type) {
@@ -322,7 +328,7 @@ function validateParameters(parameters, validations) {
       const validation = validations[key](value, {}, parameters);
       if (validation !== true) {
         if (validation === false) {
-          messages.push(icli.format.error(value) + ' is not a valid parameter for ' + icli.format.info(key));
+          messages.push(icli.format.error(value) + ' is not a valid value for ' + icli.format.info(key));
         } else {
           messages = _.concat(messages, validation);
         }
