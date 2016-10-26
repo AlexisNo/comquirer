@@ -29,6 +29,7 @@ const config = {
     description: 'Select the quantity of bacon',
     type: 'list',
     choices: ['none', 'simple', 'double', 'triple'],
+    default: 'simple',
     question: {
       message: 'What quantity of bacon do you want?'
     }

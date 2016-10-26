@@ -254,6 +254,14 @@ function getAction(parameters, executeCommand, commanderActionHook, inquirerProm
     // Launch the interactive prompt
     return prompt.prompt(parametersToQuestions(parameters, commandParameterValues))
     .then(answers => {
+      for (const parameterName in answers) {
+        const parameter = parameters.find(p => { return p.name === parameterName; });
+        if (parameter.type === 'integer') {
+          answers[parameterName] = parseInt(answers[parameterName]);
+        } else if (parameter.type === 'number') {
+          answers[parameterName] = parseFloat(answers[parameterName]);
+        }
+      }
       // Hook that allows to tranform the result of the inquirer prompt, before converting it into parameter values
       if (inquirerPromptHook) {
         return inquirerPromptHook(answers, commandParameterValues);
