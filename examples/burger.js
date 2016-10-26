@@ -20,10 +20,6 @@ const config = {
     question: {
       message: 'Choose your sauce(s)'
     }
-  // }, {
-  //   question: {
-  //     message: 'Are you vegetarian?'
-  //   }
   }, {
     cmdSpec: '-b, --bacon <none|simple|double|triple>',
     description: 'Select the quantity of bacon',
@@ -57,7 +53,7 @@ const config = {
       message: 'How many steaks do you want?'
     }
   }, {
-    cmdSpec: '--price <estimated-price>',
+    cmdSpec: '-p, --price <estimated-price>',
     description: 'Price you are willing to pay',
     type: 'number',
     question: {

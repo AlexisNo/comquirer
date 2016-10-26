@@ -23,8 +23,9 @@ describe('Comquire', function() {
       '--tomato',
       '--salad',
       '--steaks', '3',
-      '-b', 'double',
-      '-s', 'mustard,ketchup'
+      '-p', '12.5',
+      '--bacon', 'double',
+      '--sauces', 'mustard,ketchup'
     ];
     const config = {
       cmd: 'burger',
@@ -48,6 +49,7 @@ describe('Comquire', function() {
         description: 'Select the quantity of bacon',
         type: 'list',
         choices: ['none', 'simple', 'double', 'triple'],
+        default: 'simple',
         question: {
           message: 'What quantity of bacon do you want?'
         }
@@ -55,6 +57,7 @@ describe('Comquire', function() {
         cmdSpec: '--salad',
         description: 'Add salad',
         type: 'bool',
+        default: false,
         question: {
           message: 'Do you want some salad?'
         }
@@ -72,10 +75,16 @@ describe('Comquire', function() {
         question: {
           message: 'How many steaks do you want?'
         }
+      }, {
+        cmdSpec: '-p, --price <estimated-price>',
+        description: 'Price you are willing to pay',
+        type: 'number',
+        question: {
+          message: 'How much are you willing to pay?'
+        }
       }],
       commanderActionHook() {
-        // Here you can transform the data passed to commander's action() callback
-        // and return it
+        // Here you can transform the data passed to commander's action() callback and return it
         return arguments;
       },
       inquirerPromptHook(answers, commandParameterValues) {
@@ -85,25 +94,20 @@ describe('Comquire', function() {
       }
     };
     icli.createSubCommand(config, parameters => {
-      assert.equal(parameters.name, command[3], 'the "name" argument is set correctly');
-      assert.equal(parameters.tomato, true, 'the "tomato" option is set correctly');
-      assert.equal(parameters.salad, true, 'the "salad" option is set correctly');
-      assert.equal(parameters.steaks, 3, 'the "steaks" option is set correctly');
-      assert.equal(parameters.bacon, 'double', 'the "bacon" option is set correctly');
-      assert.equal(parameters.sauces.join(','), 'mustard,ketchup', 'the "sauces" option is set correctly');
-      done();
+      try {
+        assert.equal(parameters.name, command[3], 'the "name" argument is set correctly');
+        assert.equal(parameters.tomato, true, 'the "tomato" option is set correctly');
+        assert.equal(parameters.salad, true, 'the "salad" option is set correctly');
+        assert.equal(parameters.steaks, 3, 'the "steaks" option is set correctly');
+        assert.equal(parameters.bacon, 'double', 'the "bacon" option is set correctly');
+        assert.equal(parameters.sauces.join(','), 'mustard,ketchup', 'the "sauces" option is set correctly');
+        done();
+      } catch (e) {
+        done(e);
+      }
     });
 
-    // icli.getProgram().parse(process.argv);
-    icli.getProgram().parse([
-      '/path/to/node', 'file.js', 'burger',
-      'my-burger',
-      '--tomato',
-      '--salad',
-      '--steaks', '3',
-      '-b', 'double',
-      '-s', 'mustard,ketchup'
-    ]);
+    icli.getProgram().parse(command);
   });
 
 });

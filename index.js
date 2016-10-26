@@ -308,15 +308,15 @@ function cliArgsToParameters(cliArgs) {
   // Initialize an object that will contain the final parameters (cli + prompt)
   const parameters = {};
 
-  const options = Array.prototype.pop.call(cliArgs);
+  const cliData = Array.prototype.pop.call(cliArgs);
   // Convert cli arguments to parameters
-  _.forEach(options._args, (argsDefinition, i) => {
+  _.forEach(cliData._args, (argsDefinition, i) => {
     parameters[_.camelCase(argsDefinition.name)] = cliArgs[i];
   });
   // Convert cli options to parameters
-  _.forEach(options.options, option => {
+  _.forEach(cliData.options, option => {
     const key = _.camelCase(option.long);
-    parameters[key] = options[key];
+    parameters[key] = cliData[key];
   });
   return parameters;
 }
