@@ -13,8 +13,8 @@ const config = {
       message: 'How do you want to name your burger?'
     }
   }, {
-    cmdSpec: '-s, --sauces <sauces-list>',
-    description: 'A comma-separated list of sauces',
+    cmdSpec: '[sauces...]',
+    description: 'List of sauces',
     type: 'checkbox',
     choices: ['bbq', 'ketchup', 'mayonnaise', 'mustard', 'spicy'],
     question: {

@@ -5,8 +5,8 @@ const cardinal = require('cardinal');
 const program = require('commander');
 const prompt = require('inquirer');
 
-const intRegex = /^[0-9]+$/;
-const numberRegex = /^[0-9]+(\.[0-9]+)?$/;
+const intRegex = /^-?[0-9]+$/;
+const numberRegex = /^-?[0-9]+(\.[0-9]+)?$/;
 
 /**
  * Interactive Command Line Interface
@@ -386,7 +386,11 @@ function parametersToQuestions(parameters, cmdParameterValues) {
     }
     if (!question.when) {
       question.when = (answers) => {
-        // skip the question if the value have been set in the command and no other when() parameter has been defined
+        // Skip the question if the value have been set in the command and no other when() parameter has been defined
+        if (!_.startsWith(parameter.cmdSpec, '-') && parameter.cmdSpec.indexOf('...') > -1) {
+          // Special case for variadic arguments
+          return cmdParameterValues[parameter.name].length === 0;
+        }
         return typeof cmdParameterValues[parameter.name] === 'undefined';
       };
     } else {
