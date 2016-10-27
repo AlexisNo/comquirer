@@ -140,7 +140,9 @@ function parseParameters(parameters) {
   // Enrich parameter configs with a name calculated from "cmdSpec"
   // Create automatic validators
   _.forEach(parameters, parameter => {
-    if (_.startsWith(parameter.cmdSpec, '-')) {
+    if (!parameter.cmdSpec) {
+      parameter.name = parameter.question.name;
+    } else if (_.startsWith(parameter.cmdSpec, '-')) {
       // Case the parameter is an option
       options.push(parseOptionSpec(parameter));
     } else {
