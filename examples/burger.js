@@ -9,25 +9,41 @@ const config = {
   parameters: [{
     cmdSpec: '[name]',
     type: 'input',
+    validate: (v) => { return /^[a-zA-Z0-9 -]+$/.test(v); },
     question: {
       message: 'How do you want to name your burger?'
     }
   }, {
-    cmdSpec: '[sauces...]',
-    description: 'List of sauces',
+    cmdSpec: '-s, --sauces <sauces-list>',
+    description: 'A comma-separated list of sauces',
     type: 'checkbox',
     choices: ['bbq', 'ketchup', 'mayonnaise', 'mustard', 'spicy'],
     question: {
       message: 'Choose your sauce(s)'
     }
   }, {
+    cmdSpec: '--vege',
+    description: 'Check if vegetarian',
+    type: 'bool',
+    default: false,
+    question: {
+      message: 'Are you vegetarian?'
+    }
+  }, {
     cmdSpec: '-b, --bacon <none|simple|double|triple>',
     description: 'Select the quantity of bacon',
     type: 'list',
-    choices: ['none', 'simple', 'double', 'triple'],
+    choices: () => {
+      return new Promise(resolve => {
+        setTimeout(() => { resolve(['none', 'simple', 'double', 'triple']); }, 200);
+      });
+    },
     default: 'simple',
     question: {
-      message: 'What quantity of bacon do you want?'
+      message: 'What quantity of bacon do you want?',
+      when: (answers, cmdParameterValues) => {
+        return cmdParameterValues.vege !== true && answers.vege !== true && cmdParameterValues.bacon === undefined;
+      }
     }
   }, {
     cmdSpec: '--salad',
@@ -40,17 +56,26 @@ const config = {
   }, {
     cmdSpec: '--tomato',
     description: 'Add tomato',
-    type: 'confirm',
-    default: true,
+    type: 'boolean',
     question: {
       message: 'Do you want some tomato?'
     }
   }, {
     cmdSpec: '--steaks <quantity>',
     description: 'Number of steaks',
+    type: 'integer',
+    question: {
+      message: 'How many steaks do you want?',
+      when: (answers, cmdParameterValues) => {
+        return cmdParameterValues.vege !== true && answers.vege !== true && cmdParameterValues.bacon === undefined;
+      }
+    }
+  }, {
+    cmdSpec: '--drink-size <quantity>',
+    description: 'Size of the drink im ml',
     type: 'int',
     question: {
-      message: 'How many steaks do you want?'
+      message: 'What size do you want your drink?'
     }
   }, {
     cmdSpec: '-p, --price <estimated-price>',
@@ -59,6 +84,16 @@ const config = {
     question: {
       message: 'How much are you willing to pay?'
     }
+  }, {
+    cmdSpec: '--satisfaction <comment>',
+    description: 'Tell us if you are happy',
+    type: 'input',
+    question: {
+      validate: () => { return true; }
+    }
+  }, {
+    cmdSpec: '-u',
+    description: 'Useless option'
   }],
   commanderActionHook() {
     // Here you can transform the data passed to commander's action() callback and return it

@@ -60,6 +60,9 @@ const icli = {
       if (parameter.type === 'int') {
         parameter.type = 'integer';
       }
+      if (parameter.type === 'bool' || parameter.type === 'boolean') {
+        parameter.type = 'confirm';
+      }
     });
 
     // create the command
@@ -69,8 +72,6 @@ const icli = {
 
     // Extract commander arguments and options from the list of parameters
     // Also enrich parameter configs with a name calculated from "cmdSpec"
-    // ES6 syntax:
-    //   const { args, options } = parseParameters(config.parameters);
     const tmp = parseParameters(config.parameters);
     const args = tmp.args;
     const options = tmp.options;
@@ -88,7 +89,14 @@ const icli = {
       );
     });
 
-    cmd.action(getAction(config.parameters, executeCommand, config.commanderActionHook, config.inquirerPromptHook));
+    cmd.action(getAction(
+      config.parameters,
+      executeCommand,
+      config.commanderActionHook,
+      config.inquirerPromptHook,
+      config.afterExecutionHook,
+      config.throwErrors
+    ));
   },
 
   /**
@@ -102,23 +110,35 @@ const icli = {
       // If the parameter is not a list of value, we create it
       if (!_.isArray(providedValues)) { providedValues = [providedValues]; }
 
-      // Normalize the list if some items a object { value, label }
-      const availableValues = _.map(list, item => { return item.value || item; });
-
-      const errorMessages = [];
-      _.forEach(providedValues, providedValue => {
-        if (_.indexOf(availableValues, providedValue) === -1) {
-          let help = 'available value: ' + icli.format.info(availableValues[0]);
-          if (availableValues.length > 1) {
-            help = 'available values: ' + _.map(availableValues, icli.format.info).join(', ');
-          }
-          errorMessages.push(icli.format.ko(providedValue) + ' is not a valid ' + (label ? label : 'value') + ' - ' + help);
-        }
-      });
-      if (errorMessages.length > 0) {
-        return errorMessages;
+      // If the list parameter is a function, we execute it
+      if (typeof list === 'function') {
+        list = list();
       }
-      return true;
+
+      // If the list parameter is not Promise, we convert it
+      if (!(typeof list.then === 'function')) {
+        list = Promise.resolve(list);
+      }
+
+      return list.then(values => {
+        // Normalize the values if some items are objects { value, label }
+        const availableValues = _.map(values, item => { return item.value || item; });
+
+        const errorMessages = [];
+        _.forEach(providedValues, providedValue => {
+          if (_.indexOf(availableValues, providedValue) === -1) {
+            let help = 'available value: ' + icli.format.info(availableValues[0]);
+            if (availableValues.length > 1) {
+              help = 'available values: ' + _.map(availableValues, icli.format.info).join(', ');
+            }
+            errorMessages.push(icli.format.ko(providedValue) + ' is not a valid ' + (label ? label : 'value') + ' - ' + help);
+          }
+        });
+        if (errorMessages.length > 0) {
+          return errorMessages;
+        }
+        return true;
+      });
     };
   }
 };
@@ -240,7 +260,7 @@ function getCoercionForType(type) {
  * @param {function} inquirerPromptHook - a hook fuction that allows to alter the result of the questions
  * @returns {function} - The function that must be passed to cmd.action()
  */
-function getAction(parameters, executeCommand, commanderActionHook, inquirerPromptHook) {
+function getAction(parameters, executeCommand, commanderActionHook, inquirerPromptHook, afterExecutionHook, throwErrors) {
   return function action() {
     // Hook that allows to tranform the result of the commander parsing, before converting it into parameter values
     const args = commanderActionHook ? commanderActionHook.apply(this, arguments) : arguments;
@@ -250,12 +270,19 @@ function getAction(parameters, executeCommand, commanderActionHook, inquirerProm
       }
       return result;
     }, {});
-    const commandParameterValues = processCliArgs(args, validations);
 
-    // If the cli arguments are correct, we can prepare the questions for the interactive prompt
-    // Launch the interactive prompt
-    return prompt.prompt(parametersToQuestions(parameters, commandParameterValues))
-    .then(answers => {
+    const resultPromise = processCliArgs(args, validations, throwErrors)
+    .then(commandParameterValues => {
+      // If the cli arguments are correct, we can prepare the questions for the interactive prompt
+      // Launch the interactive prompt
+      return Promise.all([
+        commandParameterValues,
+        prompt.prompt(parametersToQuestions(parameters, commandParameterValues))
+      ]);
+    })
+    .then(result => {
+      const commandParameterValues = result[0];
+      const answers = result[1];
       for (const parameterName in answers) {
         const parameter = parameters.find(p => { return p.name === parameterName; });
         if (parameter.type === 'integer') {
@@ -274,6 +301,10 @@ function getAction(parameters, executeCommand, commanderActionHook, inquirerProm
       // Once we have all parameter values from the command and from the questions, we can execute the command
       executeCommand(_.merge(parameters[1], parameters[0]));
     });
+
+    if (afterExecutionHook) {
+      afterExecutionHook(resultPromise);
+    }
   };
 }
 
@@ -284,21 +315,25 @@ function getAction(parameters, executeCommand, commanderActionHook, inquirerProm
  * @param {Object} validators - map of parameterKey / validation function
  * @returns {Array} - a list of parameter values
  */
-function processCliArgs(cliArgs, validations) {
+function processCliArgs(cliArgs, validations, throwErrors) {
   // Initialize an object that will contain the final parameters (cli + prompt)
   const parameters = cliArgsToParameters(cliArgs);
   validations = validations || [];
-
   // We verify that arguments provided in the command are correct
-  // For example, check if the provided api-identifier does really exist
-  // If an argument is a comma separated list, we could also transform it into an Array here
-  const validationResult = validateParameters(parameters, validations);
-  if (validationResult !== true) {
-    /* eslint-disable no-console */
-    console.log('\n  ' + icli.format.ko('Error') + ':\n\n    ' + validationResult.join('\n    ') + '\n');
-    process.exit(1);
-  }
-  return parameters;
+  // For example, check if a provided identifier does really exist
+  return validateParameters(parameters, validations)
+  .then(validationResult => {
+    if (validationResult !== true) {
+      if (throwErrors === true) {
+        throw new Error(validationResult.join('\n    '));
+      }
+      /* eslint-disable-next-line no-console */ /* istanbul ignore next */
+      console.log('\n  ' + icli.format.ko('Error') + ':\n\n    ' + validationResult.join('\n    ') + '\n');
+      /* istanbul ignore next */
+      process.exit(1);
+    }
+    return parameters;
+  });
 }
 
 /**
@@ -332,20 +367,24 @@ function cliArgsToParameters(cliArgs) {
  */
 function validateParameters(parameters, validations) {
   let messages = [];
-  _.forEach(parameters, (value, key) => {
+  const responsesPromises = _.map(parameters, (value, key) => {
     if (typeof value !== 'undefined' && validations[key]) {
-      // A validation function receive 3 parameters: value to test, prompt answers and cli parameters
-      const validation = validations[key](value, {}, parameters);
-      if (validation !== true) {
+      return Promise.resolve(validations[key](value, {}, parameters))
+      .then(validation => {
         if (validation === false) {
-          messages.push(icli.format.error(value) + ' is not a valid value for ' + icli.format.info(key));
-        } else {
+          // Generic message
+          messages.push(icli.format.error(parameters[key]) + ' is not a valid value for ' + icli.format.info(key));
+        } else if (validation !== true) {
+          // Specialized message(s) if provided
           messages = _.concat(messages, validation);
         }
-      }
+      });
     }
   });
-  return messages.length ? messages : true;
+  return Promise.all(responsesPromises)
+  .then(() => {
+    return messages.length ? messages : true;
+  });
 }
 
 /**
@@ -368,10 +407,11 @@ function parametersToQuestions(parameters, cmdParameterValues) {
     question.default = question.default || parameter.default;
     question.type = question.type || parameter.type;
     question.name = question.name || parameter.name;
+    question.message = question.message || parameter.description || parameter.name;
     if (!question.choices && parameter.choices) {
       if (_.isFunction(parameter.choices)) {
         question.choices = answers => {
-          // When defined at the "parameter" level, choices() provide the command parameter values as an extra argument
+          // When defined at the "question" level, choices() provide the command parameter values as an extra argument
           return parameter.choices(answers, cmdParameterValues);
         };
       } else {
@@ -380,7 +420,7 @@ function parametersToQuestions(parameters, cmdParameterValues) {
     }
     if (!question.validate && parameter.validate) {
       question.validate = (input, answers) => {
-        // When defined at the "parameter" level, validate() provide the command parameter values as an extra argument
+        // When defined at the "question" level, validate() provide the command parameter values as an extra argument
         return parameter.validate(input, answers, cmdParameterValues);
       };
     }
@@ -396,7 +436,7 @@ function parametersToQuestions(parameters, cmdParameterValues) {
     } else {
       const extendedWhen = question.when;
       question.when = (answers) => {
-        // When defined at the "parameter" level, when() provide the command parameter values as an extra argument
+        // When defined at the "question" level, when() provide the command parameter values as an extra argument
         return extendedWhen(answers, cmdParameterValues);
       };
     }
