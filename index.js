@@ -440,6 +440,13 @@ function parametersToQuestions(parameters, cmdParameterValues) {
         return extendedWhen(answers, cmdParameterValues);
       };
     }
+    if (question.default instanceof Function) {
+      const extendedDefault = question.default;
+      question.default = (answers) => {
+        // When defined at the "question" level, when() provide the command parameter values as an extra argument
+        return extendedDefault(answers, cmdParameterValues);
+      };
+    }
 
     questions.push(question);
   });
