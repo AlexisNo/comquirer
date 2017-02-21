@@ -132,6 +132,40 @@ describe('Comquire', function() {
       '--vege',
       '--satisfaction', 'very happy'
     ];
+    commandConfig.execute = parameters => {
+      try {
+        assert.equal(parameters.name, command[3], 'the "name" argument is set correctly');
+        assert.equal(parameters.tomato, true, 'the "tomato" option is set correctly');
+        assert.equal(parameters.salad, true, 'the "salad" option is set correctly');
+        assert.equal(parameters.steaks, 3, 'the "steaks" option is set correctly');
+        assert.equal(parameters.drinkSize, 200, 'the "drink-size" option is set correctly');
+        assert.equal(parameters.bacon, 'double', 'the "bacon" option is set correctly');
+        assert.equal(parameters.sauces.join(','), 'mustard,ketchup', 'the "sauces" option is set correctly');
+        done();
+      } catch (e) {
+        done(e);
+      }
+    };
+    icli.createSubCommand(commandConfig);
+    icli.getProgram().parse(command);
+  });
+
+  it('should accept the execution function as a second arugment', function(done) {
+    const command = [
+      '/path/to/node', 'file.js', 'another-burger',
+      'my-burger',
+      '--tomato',
+      '--salad',
+      '--steaks', '3',
+      '--drink-size', '200',
+      '-p', '12.5',
+      '--bacon', 'double',
+      '--sauces', 'mustard,ketchup',
+      '--vege',
+      '--satisfaction', 'very happy'
+    ];
+    commandConfig.cmd = 'another-burger';
+    delete commandConfig.execute;
     icli.createSubCommand(commandConfig, parameters => {
       try {
         assert.equal(parameters.name, command[3], 'the "name" argument is set correctly');
@@ -148,7 +182,6 @@ describe('Comquire', function() {
     });
     icli.getProgram().parse(command);
   });
-
 
   it('should generate errors if values do not pass validation', function(done) {
     const command = [
@@ -186,9 +219,10 @@ describe('Comquire', function() {
         done();
       });
     };
-    icli.createSubCommand(commandConfig, parameters => {
+    commandConfig.execute = parameters => {
       throw new Error('This code should not be reached 2');
-    });
+    };
+    icli.createSubCommand(commandConfig);
     icli.getProgram().parse(command);
   });
 });

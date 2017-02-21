@@ -44,7 +44,7 @@ const config = {
       when: (answers, cmdParameterValues) => {
         return cmdParameterValues.vege !== true && answers.vege !== true && cmdParameterValues.bacon === undefined;
       }
-    }
+    },
   }, {
     cmdSpec: '--salad',
     description: 'Add salad',
@@ -103,16 +103,17 @@ const config = {
     // Here you can transform the data promised by inquirer
     // Additionally, parameters provided in the command line are available
     return Promise.resolve([answers, commandParameterValues]);
+  },
+  execute: parameters => {
+    // The argument of this callback function is the aggregation of parameter values from the command and from the prompt
+    // Comquirer comes with a small helper to colorize text
+    console.log('The ' + icli.format.info(parameters.name) + ' burger is in preparation ...');
+    const burger = parameters;
+    console.log('Have a nice meal!');
+    // syntax highlighting is performed by cardinal
+    console.log(icli.highlight(JSON.stringify(burger, null, 2), { json: true }));
   }
 };
-icli.createSubCommand(config, parameters => {
-  // The argument of this callback function is the aggregation of parameter values from the command and from the prompt
-  // Comquirer comes with a small helper to colorize text
-  console.log('The ' + icli.format.info(parameters.name) + ' burger is in preparation ...');
-  const burger = parameters;
-  console.log('Have a nice meal!');
-  // syntax highlighting is performed by cardinal
-  console.log(icli.highlight(JSON.stringify(burger, null, 2), { json: true }));
-});
+icli.createSubCommand(config);
 
 icli.getProgram().parse(process.argv);

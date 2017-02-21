@@ -53,7 +53,14 @@ const icli = {
    * @param {function} executeCommand - callback processing the property values once defined by the command line and the prompt
    * @returns {void}
    */
-  createSubCommand(config, executeCommand) {
+  createSubCommand(config, execute) {
+    if (execute !== undefined) {
+      config.execute = execute;
+    }
+    if (!_.isFunction(config.execute)) {
+      throw new Error('A command configuration must have a function as "execute" property');
+    }
+
     // Initialise config and resolve configuration aliases
     config.parameters = config.parameters || [];
     config.parameters.forEach(parameter => {
@@ -91,7 +98,7 @@ const icli = {
 
     cmd.action(getAction(
       config.parameters,
-      executeCommand,
+      config.execute,
       config.commanderActionHook,
       config.inquirerPromptHook,
       config.afterExecutionHook,

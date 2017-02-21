@@ -1,6 +1,6 @@
 {
   "name": "comquirer",
-  "version": "0.0.7",
+  "version": "0.0.8",
   "description": "A node module that aims to define a unique and simple configuration for inquirer and commander",
   "main": "index.js",
   "scripts": {
