@@ -91,7 +91,7 @@ icli.createSubCommand(config, parameters => {
   // The argument of this callback function is the aggregation of parameter values from the command and from the prompt
 
   // Comquirer comes with a small helper to colorize text
-  console.log('The ' + icli.info(parameters.name) + ' burger is in preparation ...')
+  console.log('The ' + icli.format.info(parameters.name) + ' burger is in preparation ...')
 
   burgerLib.doABurger(parameters)
   .then(burger => {
