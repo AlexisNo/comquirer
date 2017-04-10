@@ -1,6 +1,6 @@
 {
   "name": "comquirer",
-  "version": "0.0.9",
+  "version": "0.0.10",
   "description": "A node module that aims to define a unique and simple configuration for inquirer and commander",
   "main": "index.js",
   "scripts": {
@@ -29,16 +29,16 @@
   "dependencies": {
     "cardinal": "^1.0.0",
     "commander": "^2.9.0",
-    "inquirer": "^2.0.0",
+    "inquirer": "^3.0.6",
     "lodash": "^4.17.2"
   },
   "devDependencies": {
     "bithound": "^1.7.0",
-    "codecov": "^1.0.1",
+    "codecov": "^2.1.0",
     "eslint": "^3.12.2",
     "istanbul": "^0.4.5",
     "mocha": "^3.2.0",
-    "remark-cli": "^2.1.0",
-    "remark-lint": "^5.4.0"
+    "remark-cli": "^3.0.0",
+    "remark-lint": "^6.0.0"
   }
 }
