@@ -99,7 +99,7 @@ const commandConfig = {
   }]
 };
 
-describe('Comquire', function() {
+describe('Comquirer', function() {
 
   it('should colorize portions of text', () => {
     assert.equal(icli.format.cmd('a command'), '\x1b[33ma command\x1b[0m', 'commands are colorised');
@@ -118,7 +118,7 @@ describe('Comquire', function() {
   });
 
 
-  it('should transform a configuration object into a command and a prompt', function(done) {
+  it('should transform a configuration object into a command and a prompt', function() {
     const command = [
       '/path/to/node', 'file.js', 'burger',
       'my-burger',
@@ -132,25 +132,31 @@ describe('Comquire', function() {
       '--vege',
       '--satisfaction', 'very happy'
     ];
-    commandConfig.execute = parameters => {
-      try {
-        assert.equal(parameters.name, command[3], 'the "name" argument is set correctly');
-        assert.equal(parameters.tomato, true, 'the "tomato" option is set correctly');
-        assert.equal(parameters.salad, true, 'the "salad" option is set correctly');
-        assert.equal(parameters.steaks, 3, 'the "steaks" option is set correctly');
-        assert.equal(parameters.drinkSize, 200, 'the "drink-size" option is set correctly');
-        assert.equal(parameters.bacon, 'double', 'the "bacon" option is set correctly');
-        assert.equal(parameters.sauces.join(','), 'mustard,ketchup', 'the "sauces" option is set correctly');
-        done();
-      } catch (e) {
-        done(e);
-      }
+    commandConfig.execute = (parameters, done) => {
+      assert.equal(parameters.name, command[3], 'the "name" argument is set correctly');
+      assert.equal(parameters.tomato, true, 'the "tomato" option is set correctly');
+      assert.equal(parameters.salad, true, 'the "salad" option is set correctly');
+      assert.equal(parameters.steaks, 3, 'the "steaks" option is set correctly');
+      assert.equal(parameters.drinkSize, 200, 'the "drink-size" option is set correctly');
+      assert.equal(parameters.bacon, 'double', 'the "bacon" option is set correctly');
+      assert.equal(parameters.sauces.join(','), 'mustard,ketchup', 'the "sauces" option is set correctly');
+      done(null, parameters);
     };
-    icli.createSubCommand(commandConfig);
+    const execDonePromise = icli.createSubCommand(commandConfig);
     icli.getProgram().parse(command);
+    return execDonePromise.then(burger => {
+      assert.equal(burger.name, command[3], 'the "name" argument is set correctly');
+      assert.equal(burger.tomato, true, 'the "tomato" option is set correctly');
+      assert.equal(burger.salad, true, 'the "salad" option is set correctly');
+      assert.equal(burger.steaks, 3, 'the "steaks" option is set correctly');
+      assert.equal(burger.drinkSize, 200, 'the "drink-size" option is set correctly');
+      assert.equal(burger.bacon, 'double', 'the "bacon" option is set correctly');
+      assert.equal(burger.sauces.join(','), 'mustard,ketchup', 'the "sauces" option is set correctly');
+    });
   });
 
-  it('should accept the execution function as a second arugment', function(done) {
+
+  it('should accept the execution function as a second arugment', function() {
     const command = [
       '/path/to/node', 'file.js', 'another-burger',
       'my-burger',
@@ -166,26 +172,63 @@ describe('Comquire', function() {
     ];
     commandConfig.cmd = 'another-burger';
     delete commandConfig.execute;
-    icli.createSubCommand(commandConfig, parameters => {
-      try {
-        assert.equal(parameters.name, command[3], 'the "name" argument is set correctly');
-        assert.equal(parameters.tomato, true, 'the "tomato" option is set correctly');
-        assert.equal(parameters.salad, true, 'the "salad" option is set correctly');
-        assert.equal(parameters.steaks, 3, 'the "steaks" option is set correctly');
-        assert.equal(parameters.drinkSize, 200, 'the "drink-size" option is set correctly');
-        assert.equal(parameters.bacon, 'double', 'the "bacon" option is set correctly');
-        assert.equal(parameters.sauces.join(','), 'mustard,ketchup', 'the "sauces" option is set correctly');
-        done();
-      } catch (e) {
-        done(e);
-      }
+    const execDonePromise = icli.createSubCommand(commandConfig, (parameters, done) => {
+      assert.equal(parameters.name, command[3], 'the "name" argument is set correctly');
+      assert.equal(parameters.tomato, true, 'the "tomato" option is set correctly');
+      assert.equal(parameters.salad, true, 'the "salad" option is set correctly');
+      assert.equal(parameters.steaks, 3, 'the "steaks" option is set correctly');
+      assert.equal(parameters.drinkSize, 200, 'the "drink-size" option is set correctly');
+      assert.equal(parameters.bacon, 'double', 'the "bacon" option is set correctly');
+      assert.equal(parameters.sauces.join(','), 'mustard,ketchup', 'the "sauces" option is set correctly');
+      done(null, parameters);
     });
     icli.getProgram().parse(command);
+    return execDonePromise.then(burger => {
+      assert.equal(burger.name, command[3], 'the "name" argument is set correctly');
+      assert.equal(burger.tomato, true, 'the "tomato" option is set correctly');
+      assert.equal(burger.salad, true, 'the "salad" option is set correctly');
+      assert.equal(burger.steaks, 3, 'the "steaks" option is set correctly');
+      assert.equal(burger.drinkSize, 200, 'the "drink-size" option is set correctly');
+      assert.equal(burger.bacon, 'double', 'the "bacon" option is set correctly');
+      assert.equal(burger.sauces.join(','), 'mustard,ketchup', 'the "sauces" option is set correctly');
+    });
   });
 
-  it('should generate errors if values do not pass validation', function(done) {
+  it('should reject the Promise returned by createSubCommand() if needed', function() {
     const command = [
-      '/path/to/node', 'file.js', 'bad-burger',
+      '/path/to/node', 'file.js', 'another-burger-again',
+      'my-burger',
+      '--tomato',
+      '--salad',
+      '--steaks', '3',
+      '--drink-size', '200',
+      '-p', '12.5',
+      '--bacon', 'double',
+      '--sauces', 'mustard,ketchup',
+      '--vege',
+      '--satisfaction', 'very happy'
+    ];
+    commandConfig.cmd = 'another-burger-again';
+    commandConfig.execute = (parameters, done) => {
+      done(new Error('Fail for some reason'));
+    };
+    const execDonePromise = icli.createSubCommand(commandConfig);
+    icli.getProgram().parse(command);
+
+    return execDonePromise.then(() => {
+      throw new Error('This code should not be reached');
+    })
+    .catch(e => {
+      // We expect to catch an error here
+      assert.equal(e.message, 'Fail for some reason');
+      return Promise.resolve();
+    });
+  });
+
+
+  it('should reject the Promise returned by createSubCommand() if something went wrong during the parsing', function() {
+    const command = [
+      '/path/to/node', 'file.js', 'another-bad-burger',
       'my_burger',
       '--tomato',
       '--salad',
@@ -197,32 +240,27 @@ describe('Comquire', function() {
       '--vege',
       '--satisfaction', 'very happy'
     ];
-    commandConfig.cmd = 'bad-burger';
+    commandConfig.cmd = 'another-bad-burger';
     commandConfig.commanderActionHook = function() {
       return arguments;
     };
     commandConfig.inquirerPromptHook = (answers, commandParameterValues) => {
       return Promise.resolve([answers, commandParameterValues]);
     };
-    commandConfig.afterExecutionHook = (p) => {
-      p.then(() => {
-        throw new Error('This code should not be reached 1');
-      })
-      .catch(e => {
-        // We expect to catch an error here
-        const messages = e.message.split('\n');
-        try {
-          assert.equal(messages.length, 6);
-        } catch (e) {
-          return done(e);
-        }
-        done();
-      });
-    };
     commandConfig.execute = parameters => {
-      throw new Error('This code should not be reached 2');
+      throw new Error('This code should not be reached 1');
     };
-    icli.createSubCommand(commandConfig);
+    const execDonePromise = icli.createSubCommand(commandConfig);
     icli.getProgram().parse(command);
+
+    return execDonePromise.then(() => {
+      throw new Error('This code should not be reached 2');
+    })
+    .catch(e => {
+      // We expect to catch an error here
+      const messages = e.message.split('\n');
+      assert.equal(messages.length, 6);
+      return Promise.resolve();
+    });
   });
 });

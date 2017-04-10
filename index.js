@@ -1,5 +1,7 @@
 'use strict';
 
+const EventEmitter = require('events');
+
 const _ = require('lodash');
 const cardinal = require('cardinal');
 const program = require('commander');
@@ -96,14 +98,31 @@ const icli = {
       );
     });
 
+    const finishEventEmitter = new EventEmitter();
+
     cmd.action(getAction(
       config.parameters,
       config.execute,
       config.commanderActionHook,
       config.inquirerPromptHook,
-      config.afterExecutionHook,
-      config.throwErrors
+      config.throwErrors,
+      (err, res) => {
+        if (err !== null) {
+          finishEventEmitter.emit('failure', err);
+        } else {
+          finishEventEmitter.emit('success', res);
+        }
+      }
     ));
+
+    return new Promise((resolve, reject) => {
+      finishEventEmitter.on('success', (res) => {
+        resolve(res);
+      });
+      finishEventEmitter.on('failure', (err) => {
+        reject(err);
+      });
+    });
   },
 
   /**
@@ -267,7 +286,7 @@ function getCoercionForType(type) {
  * @param {function} inquirerPromptHook - a hook fuction that allows to alter the result of the questions
  * @returns {function} - The function that must be passed to cmd.action()
  */
-function getAction(parameters, executeCommand, commanderActionHook, inquirerPromptHook, afterExecutionHook, throwErrors) {
+function getAction(parameters, executeCommand, commanderActionHook, inquirerPromptHook, throwErrors, done) {
   return function action() {
     // Hook that allows to tranform the result of the commander parsing, before converting it into parameter values
     const args = commanderActionHook ? commanderActionHook.apply(this, arguments) : arguments;
@@ -278,7 +297,7 @@ function getAction(parameters, executeCommand, commanderActionHook, inquirerProm
       return result;
     }, {});
 
-    const resultPromise = processCliArgs(args, validations, throwErrors)
+    processCliArgs(args, validations, throwErrors)
     .then(commandParameterValues => {
       // If the cli arguments are correct, we can prepare the questions for the interactive prompt
       // Launch the interactive prompt
@@ -306,12 +325,13 @@ function getAction(parameters, executeCommand, commanderActionHook, inquirerProm
     })
     .then(parameters => {
       // Once we have all parameter values from the command and from the questions, we can execute the command
-      executeCommand(_.merge(parameters[1], parameters[0]));
+      executeCommand(_.merge(parameters[1], parameters[0]), done);
+    })
+    .catch(e => {
+      // If a Promise has be rejected, we call done() with the error,
+      // so that the Promise returned by createSubCommand() is rejected
+      done(e);
     });
-
-    if (afterExecutionHook) {
-      afterExecutionHook(resultPromise);
-    }
   };
 }
 
