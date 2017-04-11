@@ -11,8 +11,6 @@ const intRegex = /^-?[0-9]+$/;
 const numberRegex = /^-?[0-9]+(\.[0-9]+)?$/;
 
 const executionDoneEventEmitter = new EventEmitter();
-// Avoid warning in tests, maybe this should be configurable
-executionDoneEventEmitter.setMaxListeners(0);
 
 /**
  * Interactive Command Line Interface
@@ -55,11 +53,12 @@ const icli = {
 
   parse(argv) {
     return new Promise((resolve, reject) => {
-      executionDoneEventEmitter.once('success', (res) => {
-        resolve(res);
-      });
-      executionDoneEventEmitter.once('failure', (e) => {
-        reject(e);
+      executionDoneEventEmitter.once('executed', (e, res) => {
+        if (e !== null) {
+          reject(e);
+        } else {
+          resolve(res);
+        }
       });
       this.getProgram().parse(argv);
     });
@@ -331,13 +330,13 @@ function getAction(parameters, executeCommand, commanderActionHook, inquirerProm
     .then(res => {
       // If everything worked until here, we emit "failure"
       // so that the Promise returned by parse() is resolved
-      eventEmitter.emit('success', res);
+      eventEmitter.emit('executed', null, res);
       return Promise.resolve(res);
     })
     .catch(e => {
       // If a Promise has be rejected, we emit "failure"
       // so that the Promise returned by parse() is rejected
-      eventEmitter.emit('failure', e);
+      eventEmitter.emit('executed', e);
       return Promise.reject(e);
     });
   };
