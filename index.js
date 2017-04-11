@@ -11,6 +11,8 @@ const intRegex = /^-?[0-9]+$/;
 const numberRegex = /^-?[0-9]+(\.[0-9]+)?$/;
 
 const executionDoneEventEmitter = new EventEmitter();
+// Avoid warning in tests, maybe this should be configurable
+executionDoneEventEmitter.setMaxListeners(0);
 
 /**
  * Interactive Command Line Interface
