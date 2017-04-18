@@ -101,6 +101,10 @@ const commandConfig = {
 
 describe('Comquirer', function() {
 
+  beforeEach(() => {
+    icli.reset();
+  });
+
   it('should colorize portions of text', () => {
     assert.equal(icli.format.cmd('a command'), '\x1b[33ma command\x1b[0m', 'commands are colorised');
     assert.equal(icli.format.info('an info'), '\x1b[36man info\x1b[0m', 'information is colorised');
@@ -155,13 +159,13 @@ describe('Comquirer', function() {
   });
 
 
-  it('should accept the execution function as a second arugment', function() {
+  it('should accept the execution function as a second argument', function() {
     const command = [
-      '/path/to/node', 'file.js', 'another-burger',
+      '/path/to/node', 'file.js', 'burger',
       'my-burger',
       '--tomato',
       '--salad',
-      '--steaks', '3',
+      '--steaks', '4',
       '--drink-size', '200',
       '-p', '12.5',
       '--bacon', 'double',
@@ -169,13 +173,12 @@ describe('Comquirer', function() {
       '--vege',
       '--satisfaction', 'very happy'
     ];
-    commandConfig.cmd = 'another-burger';
     delete commandConfig.execute;
     icli.createSubCommand(commandConfig, parameters => {
       assert.equal(parameters.name, command[3], 'the "name" argument is set correctly');
       assert.equal(parameters.tomato, true, 'the "tomato" option is set correctly');
       assert.equal(parameters.salad, true, 'the "salad" option is set correctly');
-      assert.equal(parameters.steaks, 3, 'the "steaks" option is set correctly');
+      assert.equal(parameters.steaks, 4, 'the "steaks" option is set correctly');
       assert.equal(parameters.drinkSize, 200, 'the "drink-size" option is set correctly');
       assert.equal(parameters.bacon, 'double', 'the "bacon" option is set correctly');
       assert.equal(parameters.sauces.join(','), 'mustard,ketchup', 'the "sauces" option is set correctly');
@@ -185,7 +188,7 @@ describe('Comquirer', function() {
       assert.equal(burger.name, command[3], 'the "name" argument is set correctly');
       assert.equal(burger.tomato, true, 'the "tomato" option is set correctly');
       assert.equal(burger.salad, true, 'the "salad" option is set correctly');
-      assert.equal(burger.steaks, 3, 'the "steaks" option is set correctly');
+      assert.equal(burger.steaks, 4, 'the "steaks" option is set correctly');
       assert.equal(burger.drinkSize, 200, 'the "drink-size" option is set correctly');
       assert.equal(burger.bacon, 'double', 'the "bacon" option is set correctly');
       assert.equal(burger.sauces.join(','), 'mustard,ketchup', 'the "sauces" option is set correctly');
@@ -194,7 +197,7 @@ describe('Comquirer', function() {
 
   it('should reject the Promise returned by createSubCommand() if needed', function() {
     const command = [
-      '/path/to/node', 'file.js', 'another-burger-again',
+      '/path/to/node', 'file.js', 'burger',
       'my-burger',
       '--tomato',
       '--salad',
@@ -206,7 +209,6 @@ describe('Comquirer', function() {
       '--vege',
       '--satisfaction', 'very happy'
     ];
-    commandConfig.cmd = 'another-burger-again';
     commandConfig.execute = (parameters) => {
       return Promise.reject(new Error('Fail for some reason'));
     };
@@ -224,7 +226,7 @@ describe('Comquirer', function() {
 
   it('should reject the Promise returned by createSubCommand() if something went wrong during the parsing', function() {
     const command = [
-      '/path/to/node', 'file.js', 'another-bad-burger',
+      '/path/to/node', 'file.js', 'burger',
       'my_burger',
       '--tomato',
       '--salad',
@@ -236,7 +238,6 @@ describe('Comquirer', function() {
       '--vege',
       '--satisfaction', 'very happy'
     ];
-    commandConfig.cmd = 'another-bad-burger';
     commandConfig.commanderActionHook = function() {
       return arguments;
     };

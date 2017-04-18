@@ -4,7 +4,8 @@ const EventEmitter = require('events');
 
 const _ = require('lodash');
 const cardinal = require('cardinal');
-const program = require('commander');
+const commander = require('commander');
+let program = new commander.Command();
 const prompt = require('inquirer');
 
 const intRegex = /^-?[0-9]+$/;
@@ -49,6 +50,14 @@ const icli = {
    */
   getProgram() {
     return program;
+  },
+
+  /**
+   * Reinit Commander instance
+   * @returns {void}
+   */
+  reset() {
+    program = new commander.Command();
   },
 
   parse(argv) {
@@ -337,7 +346,6 @@ function getAction(parameters, executeCommand, commanderActionHook, inquirerProm
       // If a Promise has be rejected, we emit "failure"
       // so that the Promise returned by parse() is rejected
       eventEmitter.emit('executed', e);
-      return Promise.reject(e);
     });
   };
 }
