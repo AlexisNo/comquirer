@@ -5,6 +5,7 @@ const EventEmitter = require('events');
 const _ = require('lodash');
 const cardinal = require('cardinal');
 const commander = require('commander');
+fixCommander(commander);
 let program = new commander.Command();
 const prompt = require('inquirer');
 
@@ -494,4 +495,85 @@ function parametersToQuestions(parameters, cmdParameterValues) {
     questions.push(question);
   });
   return questions;
+}
+
+
+function fixCommander(commander) {
+  /**
+   * Parse options from `argv` returning `argv`
+   * void of these options.
+   *
+   * @param {Array} argv
+   * @return {Array}
+   * @api public
+   */
+  commander.Command.prototype.parseOptions = function(argv) {
+    var args = []
+      , len = argv.length
+      , literal
+      , option
+      , arg;
+
+    var unknownOptions = [];
+
+    // parse options
+    for (var i = 0; i < len; ++i) {
+      arg = argv[i];
+
+      // literal args after --
+      if ('--' == arg) {
+        literal = true;
+        continue;
+      }
+
+      if (literal) {
+        args.push(arg);
+        continue;
+      }
+
+      // find matching Option
+      option = this.optionFor(arg);
+
+      // option is defined
+      if (option) {
+        // requires arg
+        if (option.required) {
+          arg = argv[++i];
+          if (null == arg) return this.optionMissingArgument(option);
+          this.emit(option.name(), arg);
+        // optional arg
+        } else if (option.optional) {
+          arg = argv[i + 1];
+          if (null == arg || ('-' == arg[0] && '-' != arg)) {
+            arg = null;
+          } else {
+            ++i;
+          }
+          this.emit(option.name(), arg);
+        // bool
+        } else {
+          this.emit(option.name());
+        }
+        continue;
+      }
+
+      // looks like an option
+      if (arg.length > 1 && '-' == arg[0]) {
+        unknownOptions.push(arg);
+
+        // If the next argument looks like it might be
+        // an argument for this option, we pass it on.
+        // If it isn't, then it'll simply be ignored
+        if ((argv[i + 1] || argv[i + 1] === '') && '-' != argv[i + 1][0]) {
+          unknownOptions.push(argv[++i]);
+        }
+        continue;
+      }
+
+      // arg
+      args.push(arg);
+    }
+
+    return { args: args, unknown: unknownOptions };
+  };
 }
