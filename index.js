@@ -340,7 +340,6 @@ function getAction(parameters, executeCommand, commanderActionHook, inquirerProm
       // If everything worked until here, we emit "failure"
       // so that the Promise returned by parse() is resolved
       eventEmitter.emit('executed', null, res);
-      return Promise.resolve(res);
     })
     .catch(e => {
       // If a Promise has be rejected, we emit "failure"
@@ -395,7 +394,9 @@ function cliArgsToParameters(cliArgs) {
   // Convert cli options to parameters
   _.forEach(cliData.options, option => {
     const key = _.camelCase(option.long);
-    parameters[key] = cliData[key];
+    // Fix the problem that initialised values to a function for options with names like "alias" or "description"
+    const value = cliData.hasOwnProperty(key) ? cliData[key] : undefined;
+    parameters[key] = value;
   });
   return parameters;
 }

@@ -93,14 +93,19 @@ icli.createSubCommand(config, parameters => {
   // Comquirer comes with a small helper to colorize text
   console.log('The ' + icli.format.info(parameters.name) + ' burger is in preparation ...')
 
-  burgerLib.doABurger(parameters)
+  return burgerLib.doABurger(parameters)
   .then(burger => {
     console.log('Have a nice meal!');
     // syntax highlighting is performed by cardinal
     console.log(icli.highlight(JSON.stringify(burger, null, 2), { json: true }));
+    // The result is available in a Promise returned by icli.parse()
+    return burger
   });
 });
 
 // Call the parse() method of commander to begin the execution
-icli.getProgram().parse(process.argv);
+icli.parse(process.argv)
+.then(myBurger => {
+  // This code is executed after 
+});
 ```

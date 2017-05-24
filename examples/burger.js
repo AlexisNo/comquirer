@@ -14,6 +14,20 @@ const config = {
       message: 'How do you want to name your burger?'
     }
   }, {
+    cmdSpec: '-a, --alias <alias>',
+    description: 'another name for the burger',
+    type: 'input',
+    question: {
+      message: 'Choose another name for the burger'
+    }
+  }, {
+    cmdSpec: '-d, --description <description>',
+    description: 'description of the burger',
+    type: 'input',
+    question: {
+      message: 'Choose a description for the burger'
+    }
+  }, {
     cmdSpec: '-s, --sauces <sauces-list>',
     description: 'A comma-separated list of sauces',
     type: 'checkbox',
@@ -112,8 +126,15 @@ const config = {
     console.log('Have a nice meal!');
     // syntax highlighting is performed by cardinal
     console.log(icli.highlight(JSON.stringify(burger, null, 2), { json: true }));
+    return Promise.resolve(burger);
   }
 };
 icli.createSubCommand(config);
 
-icli.getProgram().parse(process.argv);
+icli.parse(process.argv)
+.then(res => {
+  console.log(res);
+})
+.catch(e => {
+  console.log('ERROR', e, e.stack);
+});
