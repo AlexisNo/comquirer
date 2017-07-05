@@ -143,8 +143,10 @@ const icli = {
    */
   generateListValidation(list, label) {
     return function listValidation(providedValues) {
-      // If the parameter is not a list of value, we create it
-      if (!_.isArray(providedValues)) { providedValues = [providedValues]; }
+      if (!_.isArray(providedValues)) {
+        // If the parameter is not a list of value, we create it
+        providedValues = [providedValues];
+      }
 
       // If the list parameter is a function, we execute it
       if (typeof list === 'function') {
@@ -282,7 +284,7 @@ function getCoercionForType(type) {
         return numberRegex.test(v) ? parseFloat(v) : v;
       };
     case 'checkbox':
-      return v => { return _.map(v.split(','), _.trim); };
+      return v => { return v === '' ? [] : _.map(v.split(','), _.trim); };
     default:
       return undefined;
   }
