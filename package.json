@@ -31,7 +31,7 @@
   "dependencies": {
     "cardinal": "^1.0.0",
     "commander": "^2.9.0",
-    "inquirer": "^3.0.6",
+    "inquirer": "^7.0.5",
     "lodash": "^4.17.2",
     "snyk": "^1.319.0"
   },
